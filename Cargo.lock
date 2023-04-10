@@ -278,6 +278,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "anchor-spl"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f32390ce8356f54c0f0245ea156f8190717e37285b8bf4f406a613dc4b954cde"
+dependencies = [
+ "anchor-lang",
+ "solana-program",
+ "spl-associated-token-account",
+ "spl-token",
+]
+
+[[package]]
 name = "anchor-syn"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1884,9 +1896,11 @@ name = "jupiter-core"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "anchor-spl",
  "anyhow",
  "jupiter",
  "lazy_static",
+ "num-traits",
  "rand 0.8.5",
  "rust_decimal",
  "serde",
