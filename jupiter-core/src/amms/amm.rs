@@ -68,7 +68,7 @@ pub trait Amm {
     fn get_swap_leg_and_account_metas(
         &self,
         swap_params: &SwapParams,
-    ) -> Result<SwapLegAndAccountMetas>;
+    ) -> Result<bool>;
 
     fn clone_amm(&self) -> Box<dyn Amm + Send + Sync>;
 

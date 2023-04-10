@@ -1,7 +1,5 @@
 pub use anchor_lang::system_program::*;
 
-
-
 pub mod errors;
 pub use errors::*;
 

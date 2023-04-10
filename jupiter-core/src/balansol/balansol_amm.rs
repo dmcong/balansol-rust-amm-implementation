@@ -1,52 +1,37 @@
-use anchor_lang::{prelude::*, solana_program::*};
-use anyhow::{Context, Result};
-use spl_token::state::Account as TokenAccount;
-use std::{collections::HashMap, convert::TryInto};
-
-use crate::amms::amm::{Amm, KeyedAccount, Quote, QuoteParams, SwapLegAndAccountMetas, SwapParams};
-
-use jupiter::{
-    accounts::TokenSwap,
-    jupiter_override::{Swap, SwapLeg},
-};
+use anchor_lang::prelude::*;
+use anyhow::{Ok, Result};
+use std::collections::HashMap;
 
 use crate::pool::Pool;
+use crate::{
+    amms::amm::{Amm, KeyedAccount, Quote, QuoteParams, SwapParams},
+    Exchange,
+};
 
 pub struct BalansolAmm {
     key: Pubkey,
     label: String,
     program_id: Pubkey,
-    mints: Vec<Pubkey>,
-    treasuries: Vec<Pubkey>,
-    reserves: Vec<u64>,
+    pool: Pool,
 }
 
 impl BalansolAmm {
     pub fn from_keyed_account(keyed_account: &KeyedAccount) -> Result<Self> {
-        let account: Pool =
-            Pool::try_deserialize(&mut keyed_account.account.data.clone().as_ref()).unwrap();
+        let pool: Pool = Pool::try_deserialize(&mut keyed_account.account.data.as_ref()).unwrap();
         Ok(Self {
             key: keyed_account.key,
             label: "Balansol".to_string(),
-            mints: account.mints,
-            treasuries: account.treasuries,
-            reserves: account.reserves,
             program_id: keyed_account.account.owner,
+            pool,
         })
-    }
-
-    fn get_authority(&self) -> Pubkey {
-        Pubkey::find_program_address(&[&self.key.to_bytes()], &self.program_id).0
     }
 
     fn clone(&self) -> BalansolAmm {
         BalansolAmm {
             key: self.key,
             label: self.label.clone(),
-            treasuries: self.treasuries.clone(),
-            mints: self.mints.clone(),
             program_id: self.program_id.clone(),
-            reserves: self.reserves.clone(),
+            pool: self.pool.clone(),
         }
     }
 }
@@ -61,66 +46,46 @@ impl Amm for BalansolAmm {
     }
 
     fn get_reserve_mints(&self) -> Vec<Pubkey> {
-        self.mints.clone()
+        self.pool.mints.clone()
     }
 
     fn get_accounts_to_update(&self) -> Vec<Pubkey> {
-        self.treasuries.clone()
+        vec![self.key]
     }
 
     fn update(&mut self, accounts_map: &HashMap<Pubkey, Vec<u8>>) -> Result<()> {
+        let pool_account = accounts_map.get(&self.key).unwrap();
+        let pool: Pool = Pool::try_deserialize(&mut pool_account.as_ref()).unwrap();
+        self.pool = pool;
         Ok(())
     }
 
     fn quote(&self, quote_params: &QuoteParams) -> Result<Quote> {
+        let QuoteParams {
+            in_amount,
+            input_mint,
+            output_mint,
+        } = quote_params;
+        let pool = &self.pool;
+
+        let total_fee = pool.fee.checked_add(pool.tax_fee).unwrap();
+        let out_amount = pool
+            .calc_ask_amount_swap(*in_amount, *input_mint, *output_mint, total_fee)
+            .unwrap();
+
         Ok(Quote {
-            out_amount: 99999,
+            in_amount: *in_amount,
+            out_amount,
+            fee_mint: *output_mint,
             ..Quote::default()
         })
     }
 
-    fn get_swap_leg_and_account_metas(
-        &self,
-        swap_params: &SwapParams,
-    ) -> Result<SwapLegAndAccountMetas> {
-        let SwapParams {
-            destination_mint,
-            in_amount,
-            source_mint,
-            user_destination_token_account,
-            user_source_token_account,
-            user_transfer_authority,
-            open_order_address,
-            quote_mint_to_referrer,
-        } = swap_params;
-
-        let (swap_source, swap_destination) = if *source_mint == self.program_id {
-            (self.program_id, self.program_id)
-        } else {
-            (self.program_id, self.program_id)
-        };
-
-        let account_metas = TokenSwap {
-            destination: *user_destination_token_account,
-            source: *user_source_token_account,
-            user_transfer_authority: *user_transfer_authority,
-            authority: self.program_id,
-            token_swap_program: self.program_id,
-            token_program: spl_token::ID,
-            swap: self.key,
-            pool_mint: self.program_id,
-            pool_fee: self.program_id,
-            swap_destination,
-            swap_source,
-        }
-        .to_account_metas(None);
-
-        Ok(SwapLegAndAccountMetas {
-            swap_leg: SwapLeg::Swap {
-                swap: Swap::TokenSwap,
-            },
-            account_metas,
-        })
+    fn get_swap_leg_and_account_metas(&self, swap_params: &SwapParams) -> Result<bool> {
+        // Reference
+        // 1. balansol/instruction/balansol_swap.rs
+        // 2. balansol/balansol-idl.json
+        Ok(false)
     }
 
     fn clone_amm(&self) -> Box<dyn Amm + Send + Sync> {

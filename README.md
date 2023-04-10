@@ -1,51 +1,37 @@
-# Jupiter Rust Amm Implementation
+# Balansol
 
-This is a guide to help create the implementation for easier integration with Jupiter
+## _rust-amm-implementation_
 
-## Example implementation
+This is a guide to help implementation Balansol with Jupiter
 
-[Spl token swap](./jupiter-core/src/amms/spl_token_swap_amm.rs)
+- **Balansol Amm**: jupiter-core/balansol/**balansol_amm.rs**
+- **Balansol Swap IDL**: jupiter-core/balansol/**balansol-idl.json**
 
-You may run the test inside to run it.
+### Instruction Name: 'Swap'
 
-## Main interface
+## Accounts
 
-[file](./jupiter-core/src/amms/amm.rs)
-```rust
-pub trait Amm {
-    // Amm name
-    fn label(&self) -> String;
-    // Amm identifier, should be your pool address
-    fn key(&self) -> Pubkey;
-    // Token mints that the amm supports for swapping
-    fn get_reserve_mints(&self) -> Vec<Pubkey>;
-    // Accounts related for quoting and creating ix
-    fn get_accounts_to_update(&self) -> Vec<Pubkey>;
-    // Picks data necessary to update it's internal state
-    fn update(&mut self, accounts_map: &HashMap<Pubkey, Vec<u8>>) -> Result<()>;
-    // Returns quote for the given quote params
-    fn quote(&self, quote_params: &QuoteParams) -> Result<Quote>;
-    
-    // Just state how do we make a swap instruction, you don't have to implement this
-    fn get_swap_leg_and_account_metas(
-        &self,
-        swap_params: &SwapParams,
-    ) -> Result<SwapLegAndAccountMetas>;
+| Account Name                 | Description                                               |
+| ---------------------------- | --------------------------------------------------------- |
+| authority                    | Signer                                                    |
+| pool                         | Pool pubKey                                               |
+| taxman                       | Pool.tax_man                                              |
+| bid_mint                     | Mint: Input mint                                          |
+| treasurer                    | PDA ([ "treasurer", pool.key() ], BalansolProgramID )     |
+| src_treasury                 | TokenAccount: mint=bid_mint, authority=treasurer          |
+| src_associated_token_account | TokenAccount: mint=bid_mint, authority=authority (Signer) |
+| ask_mint                     | Mint: output_mint                                         |
+| dst_treasury                 | TokenAccount: mint=ask_mint, authority=treasurer          |
+| dst_associated_token_account | TokenAccount: mint=ask_mint, authority=authority (Signer) |
+| dst_token_account_taxman     | TokenAccount: mint=ask_mint, authority=taxman => Fee      |
+| system_program               | Program<'info, System>,                                   |
+| token_program                | Program<'info, token::Token>                              |
+| associated_token_program     | Program<'info, associated_token::AssociatedToken>         |
+| rent                         | Sysvar<'info, Rent>,                                      |
 
-}
-```
+## Params
 
-Quote interface
-```rust
-pub struct Quote {
-    pub not_enough_liquidity: bool,
-    pub min_in_amount: Option<u64>,
-    pub min_out_amount: Option<u64>,
-    pub in_amount: u64,
-    pub out_amount: u64,
-    pub fee_amount: u64,
-    pub fee_mint: Pubkey,
-    pub fee_pct: Decimal,
-    pub price_impact_pct: Decimal,
-}
-```
+| Account Name | Description           |
+| ------------ | --------------------- |
+| bid_amount   | u64: Input amount     |
+| limit        | u64: Out amount limit |
