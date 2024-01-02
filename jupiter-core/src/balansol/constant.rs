@@ -1,12 +1,9 @@
-// pool
 pub const MAXIMUM_MINT_NUMBER: usize = 8;
-pub const PRECISION: f64 = 1000000000_f64; // 10^9;
+pub const PRECISION_F64: f64 = 1000000000_f64; // 10^9;
 pub const PRECISION_U64: u64 = 1000000000_u64; // 10^9;
 pub const MINT_LPT_DECIMALS: u8 = 9;
-//
-pub const TOTAL_WEIGHTS: f64 = 1_f64;
 
-pub const PUBLIC_KEY_SIZE: usize = 32;
+pub const PUBKEY_SIZE: usize = 32;
 pub const U64_SIZE: usize = 8;
 pub const F64_SIZE: usize = 8;
 pub const U8_SIZE: usize = 1;

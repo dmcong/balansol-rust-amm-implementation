@@ -68,7 +68,7 @@ impl Amm for BalansolAmm {
         } = quote_params;
         let pool = &self.pool;
 
-        let total_fee = pool.fee.checked_add(pool.tax_fee).unwrap();
+        let total_fee = pool.fee.checked_add(pool.tax).unwrap();
         let out_amount = pool
             .calc_ask_amount_swap(*in_amount, *input_mint, *output_mint, total_fee)
             .unwrap();

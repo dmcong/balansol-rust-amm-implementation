@@ -20,12 +20,12 @@ pub enum ErrorCode {
   AccountTreasury,
   // pool state
   #[msg("Invalid pool state!")]
-  PoolState,
-  #[msg("Pool is Stopped!")]
+  InvalidPoolState,
+  #[msg("The pool was stopped!")]
   PoolStopped,
-  #[msg("Pool is not active!")]
-  PoolNotActive,
-  #[msg("Pool is not frozen!")]
+  #[msg("The pool is inactive!")]
+  PoolInactive,
+  #[msg("The pool is not frozen!")]
   PoolNotFrozen,
   // mint state
   #[msg("Invalid mint state!")]
@@ -43,7 +43,9 @@ pub enum ErrorCode {
   CalcWithdrawLpt,
   #[msg("Cant calculate full side lpt")]
   CalcSideSizeLpt,
-  //
-  #[msg("Slippage error")]
+  // swap
+  #[msg("Large slippage")]
   Slippage,
+  #[msg("Too many referrer addresses.")]
+  TooManyReferrers,
 }

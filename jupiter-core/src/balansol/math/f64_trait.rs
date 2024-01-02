@@ -20,6 +20,7 @@ impl F64Trait for f64 {
     }
     Some(true)
   }
+
   fn checked_add(&self, num: f64) -> Option<f64> {
     // Valid params
     self.valid()?;
@@ -30,6 +31,7 @@ impl F64Trait for f64 {
     result.valid()?;
     return Some(result);
   }
+
   fn checked_sub(&self, num: f64) -> Option<f64> {
     // Valid params
     self.valid()?;
@@ -40,6 +42,7 @@ impl F64Trait for f64 {
     result.valid()?;
     return Some(result);
   }
+
   fn checked_div(&self, num: f64) -> Option<f64> {
     // Valid params
     self.valid()?;
@@ -50,6 +53,7 @@ impl F64Trait for f64 {
     result.valid()?;
     return Some(result);
   }
+
   fn checked_mul(&self, num: f64) -> Option<f64> {
     // Valid params
     self.valid()?;
