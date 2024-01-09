@@ -1,12 +1,13 @@
-use anchor_lang::prelude::*;
-use anyhow::{Ok, Result};
-use std::collections::HashMap;
-
+use crate::constant::*;
 use crate::pool::Pool;
 use crate::{
     amms::amm::{Amm, KeyedAccount, Quote, QuoteParams, SwapParams},
     Exchange,
 };
+use anchor_lang::prelude::*;
+use anyhow::{Ok, Result};
+use num_traits::ToPrimitive;
+use std::collections::HashMap;
 
 pub struct BalansolAmm {
     key: Pubkey,
@@ -68,13 +69,29 @@ impl Amm for BalansolAmm {
         } = quote_params;
         let pool = &self.pool;
 
-        let out_amount = pool
+        let ask_amount = pool
             .calc_ask_amount_swap(*in_amount, *input_mint, *output_mint, pool.fee)
+            .unwrap();
+
+        let tax_amount = ask_amount
+            .to_u128()
+            .unwrap()
+            .checked_mul(pool.tax.to_u128().unwrap())
+            .unwrap()
+            .checked_div(PRECISION_U128)
+            .unwrap()
+            .to_u64()
+            .unwrap();
+
+        let return_amount = ask_amount
+            .checked_sub(tax_amount)
+            .unwrap()
+            .to_u64()
             .unwrap();
 
         Ok(Quote {
             in_amount: *in_amount,
-            out_amount,
+            out_amount: return_amount,
             fee_mint: *output_mint,
             ..Quote::default()
         })
